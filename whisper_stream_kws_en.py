@@ -11,6 +11,7 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String, Int16MultiArray
 import torch 
+from ament_index_python.packages import get_package_share_directory
 
 class Settings:
     MODEL_SIZE = "small.en"
@@ -23,7 +24,7 @@ class Settings:
     FUZZY_THRESHOLD = 70
     ALERT_COOLDOWN_SEC = 2.0
     REPEAT_THRESHOLD = 3
-    REPEAT_WINDOW_SEC = 10
+    REPEAT_WINDOW_SEC = 5
     PRINT_TRANSCRIPTS = True
     ROS_TOPIC_NAME = "/detected_keywords_en"
     
@@ -79,7 +80,10 @@ class KeywordPublisher(Node):
         return "".join(c for c in unicodedata.normalize("NFKD", text.casefold()) if not unicodedata.combining(c))
 
     def _load_keywords(self):
-        path = Path(self.settings.WORDS_FILE)
+        # This creates a reliable path to the file within your installed ROS package
+        package_share_path = get_package_share_directory('distress_detector')
+        path = Path(package_share_path) / 'words_en.txt'
+        
         if not path.exists():
             self.get_logger().warn(f"Words file not found: {path}")
             return []
